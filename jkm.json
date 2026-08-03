@@ -1,0 +1,7 @@
+{
+  "source": "bootstrap",
+  "price": 15.0,
+  "updated_at": "2026-08-03T08:19:06.800082+00:00",
+  "stale": true,
+  "error": "investing: Client error '403 Forbidden' for url 'https://www.investing.com/commodities/lng-japan-korea-marker-platts-futures'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/H"
+}

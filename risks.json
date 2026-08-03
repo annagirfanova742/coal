@@ -1,0 +1,105 @@
+{
+  "source": "risks_source.json",
+  "updated_at": "2026-08-03T08:19:06.800654+00:00",
+  "items": [
+    {
+      "id": "energy_transition",
+      "type": "risk",
+      "title": "Energy transition",
+      "severity": "critical",
+      "impact": "Спрос −35% к 2035",
+      "description": "Все рынки сбыта имеют официальные цели по отказу от угля к 2035–2060.",
+      "horizon": "2035–2060"
+    },
+    {
+      "id": "nuclear_restart",
+      "type": "risk",
+      "title": "Запуск АЭС в Корее и Японии",
+      "severity": "high",
+      "impact": "КР/ЯП demand −10%",
+      "description": "Два новых блока в 2027–2028 могут вытеснить уголь из генерации.",
+      "horizon": "2027–2028"
+    },
+    {
+      "id": "china_internal_supply",
+      "type": "risk",
+      "title": "Внутреннее производство в Китае",
+      "severity": "medium",
+      "impact": "Импорт волатилен",
+      "description": "Рост внутренней добычи давит на импортный спрос на уголь.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "lng_normalization",
+      "type": "risk",
+      "title": "Нормализация цен на СПГ",
+      "severity": "medium",
+      "impact": "Price −$5–8/т",
+      "description": "Если дефицит СПГ уйдёт, часть генерации переключится обратно на газ.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "fx_strength",
+      "type": "risk",
+      "title": "Укрепление USD/RUB",
+      "severity": "medium",
+      "impact": "−7% EBITDA₽ / −5₽",
+      "description": "Сильный рубль снижает рублёвую EBITDA при долларовой выручке.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "logistics",
+      "type": "risk",
+      "title": "Логистика",
+      "severity": "low",
+      "impact": "COGS +$2–4/т",
+      "description": "Ограниченная пропускная способность порта Шахтёрск.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "geopolitics",
+      "type": "risk",
+      "title": "Геополитика",
+      "severity": "low",
+      "impact": "Операционный риск",
+      "description": "Санкционные ограничения на расчёты и страхование судов.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "vietnam_demand",
+      "type": "upside",
+      "title": "Вьетнам",
+      "severity": "upside",
+      "impact": "+2–3 млн т объём",
+      "description": "Пик спроса 2030–2035 делает ВГК географически близким поставщиком.",
+      "horizon": "2030–2035"
+    },
+    {
+      "id": "indo_quotas",
+      "type": "upside",
+      "title": "Индонезийские квоты",
+      "severity": "upside",
+      "impact": "+$3–5/т premium",
+      "description": "Снижение индонезийского предложения поддерживает цену выше бенчмарка.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "coal_limit_lift",
+      "type": "upside",
+      "title": "Корея: снятие ограничения на сжигание угля",
+      "severity": "upside",
+      "impact": "+15–20 млн т рынок",
+      "description": "Временное снятие лимита загрузки угольных ТЭС поддерживает спрос.",
+      "horizon": "2026+"
+    },
+    {
+      "id": "weak_ruble",
+      "type": "upside",
+      "title": "Слабый рубль",
+      "severity": "fx_upside",
+      "impact": "+10% EBITDA₽ / +7₽",
+      "description": "При USD/RUB 85+ рублёвая EBITDA растёт почти пропорционально.",
+      "horizon": "2026+"
+    }
+  ]
+}

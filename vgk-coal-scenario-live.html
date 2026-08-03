@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ВГК Coal PE Dashboard</title>
+<script>if(location.pathname.endsWith("/")){location.replace("./vgk-coal-scenario-live.html")}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root,[data-theme="light"]{
+  --bg:#f5f4ef;--surf:#f8f7f3;--surf2:#fafaf7;--surfoff:#eeede8;--surfdyn:#e4e2dc;
+  --div:#d8d6cf;--bord:#ccc9c1;
+  --txt:#22201a;--muted:#78756e;--faint:#b5b3ad;
+  --pri:#7a5420;--priH:#5e3e14;--priHigh:#e8ddd0;
+  --ok:#3d6e1a;--okH:#2a500f;--okHigh:#d2dcca;
+  --err:#941f1f;--errH:#6e1414;--errHigh:#e2cecc;
+  --warn:#b07800;--warnH:#8a5c00;--warnHigh:#ede0c0;
+  --blue:#1a5078;--blueH:#0f3a5a;--blueHigh:#c2d5e4;
+  --gold:#c08a00;--goldH:#966900;--goldHigh:#ece0bb;
+  --slate:#4a5568;
+  --shsm:0 1px 3px rgba(34,32,26,.07);--shmd:0 4px 14px rgba(34,32,26,.09);
+  --shlg:0 12px 32px rgba(34,32,26,.12);
+  --r4:.25rem;--r6:.375rem;--r8:.5rem;--r12:.75rem;--r16:1rem;--rfull:9999px;
+  --fb:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  --txs:clamp(.75rem,.7rem + .25vw,.875rem);--tsm:clamp(.875rem,.8rem + .35vw,1rem);
+  --tbs:clamp(1rem,.95rem + .25vw,1.125rem);--tlg:clamp(1.125rem,1rem + .75vw,1.5rem);
+  --txl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
+  --tr:180ms cubic-bezier(.16,1,.3,1);
+  --s1:.25rem;--s2:.5rem;--s3:.75rem;--s4:1rem;--s5:1.25rem;--s6:1.5rem;--s8:2rem;
+}
+[data-theme="dark"]{
+  --bg:#13110e;--surf:#181612;--surf2:#1d1b17;--surfoff:#1b1916;--surfdyn:#2a2822;
+  --div:#252319;--bord:#37352c;
+  --txt:#d0cdc6;--muted:#7a7870;--faint:#5a5850;
+  --pri:#c49a52;--priH:#e0b86a;--priHigh:#3d3020;
+  --ok:#72b04a;--okH:#5a9535;--okHigh:#2c3e22;
+  --err:#d95f5f;--errH:#bf4545;--errHigh:#4a2020;
+  --warn:#e0aa38;--warnH:#f0c050;--warnHigh:#3e3010;
+  --blue:#60a0cc;--blueH:#4588b8;--blueHigh:#1e3348;
+  --gold:#d4a030;--goldH:#e8b845;--goldHigh:#3a2e10;
+  --shsm:0 1px 3px rgba(0,0,0,.25);--shmd:0 4px 14px rgba(0,0,0,.35);
+  --shlg:0 12px 32px rgba(0,0,0,.45);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{font-family:var(--fb);font-size:var(--tsm);color:var(--txt);background:var(--bg);min-height:100dvh;line-height:1.55}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
+table{border-collapse:collapse;width:100%}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;
+  background:linear-gradient(to right,var(--pri) var(--pct,50%),var(--div) var(--pct,50%));
+  border-radius:2px;cursor:pointer;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--pri)}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100dvh}
+.sb{background:var(--surf);border-right:1px solid var(--bord);padding:var(--s5) 0;
+  display:flex;flex-direction:column;position:sticky;top:0;height:100dvh;overflow-y:auto}
+.main{padding:var(--s6) var(--s8);display:flex;flex-direction:column;gap:var(--s6);overflow:auto}
+
+/* ── Sidebar ── */
+.logo{display:flex;align-items:center;gap:var(--s3);padding:0 var(--s5) var(--s5);
+  border-bottom:1px solid var(--div);margin-bottom:var(--s4)}
+.logo-t{font-size:var(--tsm);font-weight:700;letter-spacing:-.01em}
+.logo-s{font-size:var(--txs);color:var(--muted)}
+.ns{padding:0 var(--s3);margin-bottom:var(--s4)}
+.nl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);padding:2px var(--s2) var(--s2);font-weight:700}
+.ni{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s3);border-radius:var(--r8);
+  font-size:var(--txs);color:var(--muted);cursor:pointer;transition:all var(--tr)}
+.ni:hover{background:var(--surfoff);color:var(--txt)}
+.ni.act{background:color-mix(in oklch,var(--pri) 14%,var(--surfoff));color:var(--pri);font-weight:700}
+.sf{margin-top:auto;padding:var(--s4) var(--s5) 0;border-top:1px solid var(--div)}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:var(--s4);border-bottom:1px solid var(--div);gap:var(--s4);flex-wrap:wrap}
+.tt{font-size:var(--tlg);font-weight:800;letter-spacing:-.02em}
+.tsub{font-size:var(--txs);color:var(--muted);margin-top:3px}
+.badges{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:3px;background:var(--surfoff);padding:4px;border-radius:var(--r12);width:fit-content;flex-wrap:wrap}
+.tab{padding:var(--s2) var(--s4);border-radius:var(--r8);font-size:var(--txs);font-weight:600;color:var(--muted);cursor:pointer;transition:all var(--tr)}
+.tab.act{background:var(--surf2);color:var(--txt);box-shadow:var(--shsm)}
+.tab:hover:not(.act){color:var(--txt)}
+.panel{display:none}.panel.act{display:flex;flex-direction:column;gap:var(--s5)}
+.backend-note{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 14px;background:var(--surfoff);border:1px solid var(--bord);border-radius:var(--r12);font-size:var(--txs);color:var(--muted)}
+.backend-note strong{color:var(--txt)}
+.backend-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:9999px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.backend-pill.ok{background:color-mix(in oklch,var(--ok) 16%,transparent);color:var(--ok)}
+.backend-pill.warn{background:color-mix(in oklch,var(--warn) 16%,transparent);color:var(--warn)}
+.backend-pill.err{background:color-mix(in oklch,var(--err) 16%,transparent);color:var(--err)}
+.rg-live{display:flex;flex-direction:column;gap:var(--s3)}
+
+/* ── Badges ── */
+.badge{padding:2px var(--s2);border-radius:var(--rfull);font-size:10px;font-weight:700;letter-spacing:.02em}
+.bok{background:color-mix(in oklch,var(--ok) 15%,transparent);color:var(--ok)}
+.bwarn{background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)}
+.berr{background:color-mix(in oklch,var(--err) 15%,transparent);color:var(--err)}
+.bpri{background:color-mix(in oklch,var(--pri) 18%,transparent);color:var(--pri)}
+.bnt{background:var(--surfoff);color:var(--muted)}
+
+/* ── Section header ── */
+.sh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--s3)}
+.st{font-size:var(--tsm);font-weight:700;letter-spacing:-.01em}
+.ss{font-size:var(--txs);color:var(--muted)}
+
+/* ── KPI grid ── */
+.kg{display:grid;grid-template-columns:repeat(auto-fill,minmax(144px,1fr));gap:var(--s3)}
+.kc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r12);padding:var(--s4) var(--s5);box-shadow:var(--shsm)}
+.kl{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:var(--s2)}
+.kv{font-size:var(--txl);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.kd{font-size:var(--txs);font-weight:600;margin-top:4px}
+.up{color:var(--ok)}.dn{color:var(--err)}.wn{color:var(--warn)}.fl{color:var(--faint)}.pc{color:var(--pri)}
+
+/* ── Card grid ── */
+.cr{display:grid;gap:var(--s4)}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}
+.c13{grid-template-columns:1fr 2.4fr}.c31{grid-template-columns:2.4fr 1fr}
+.cc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r12);padding:var(--s5);box-shadow:var(--shsm)}
+.cc canvas{max-height:210px}
+.ct{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--s4)}
+
+/* ── Countries table ── */
+.ctry{border:1px solid var(--bord);border-radius:var(--r12);overflow:hidden;font-size:var(--txs)}
+.ctry th{background:var(--surfoff);padding:8px 12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bord);text-align:left}
+.ctry th:not(:first-child){text-align:center}
+.ctry td{padding:8px 12px;border-bottom:1px solid var(--div);vertical-align:middle}
+.ctry td:not(:first-child){text-align:center}
+.ctry tr:last-child td{border-bottom:none}
+.ctry tbody tr:hover td{background:var(--surfoff)}
+.cname{font-weight:700}
+.cdot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.sig{font-size:10px;padding:1px 6px;border-radius:var(--rfull);font-weight:700}
+.sig-g{background:color-mix(in oklch,var(--ok) 15%,transparent);color:var(--ok)}
+.sig-y{background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)}
+.sig-r{background:color-mix(in oklch,var(--err) 15%,transparent);color:var(--err)}
+.cmnt{color:var(--muted);font-size:11px;max-width:340px;line-height:1.45}
+
+/* ── Price table ── */
+.ptb{border:1px solid var(--bord);border-radius:var(--r12);overflow:hidden}
+.ptb th{background:var(--surfoff);padding:8px 14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--bord);text-align:left;font-size:11px}
+.ptb td{padding:8px 14px;border-bottom:1px solid var(--div);font-size:11px;vertical-align:top}
+.ptb td:first-child{font-weight:700;font-family:var(--fm);font-variant-numeric:tabular-nums;color:var(--pri)}
+.ptb td:nth-child(2){font-family:var(--fm);font-weight:700;font-variant-numeric:tabular-nums}
+.ptb tr:last-child td{border-bottom:none}
+.ptb .avg td{background:color-mix(in oklch,var(--pri) 10%,var(--surf));font-weight:700}
+.ptb .avg td:nth-child(2){color:var(--pri)}
+
+/* ── Scenario ── */
+.scg{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s4)}
+.sc{border-radius:var(--r16);padding:var(--s5);border:1px solid var(--bord);background:var(--surf)}
+.scbear{border-color:color-mix(in oklch,var(--err) 28%,var(--bord))}
+.scbase{border-color:color-mix(in oklch,var(--pri) 35%,var(--bord));background:color-mix(in oklch,var(--pri) 6%,var(--surf))}
+.scbull{border-color:color-mix(in oklch,var(--ok) 28%,var(--bord))}
+.sctag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:var(--s2)}
+.scval{font-size:var(--txl);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-bottom:var(--s3)}
+.scrow{display:flex;justify-content:space-between;font-size:var(--txs);color:var(--muted);padding:4px 0;border-bottom:1px solid var(--div)}
+.scrow:last-child{border-bottom:none}
+.scrow span:last-child{font-weight:700;color:var(--txt);font-family:var(--fm);font-variant-numeric:tabular-nums}
+
+/* ── Debt repayment table ── */
+input#slInv,input#slRep{
+  background:linear-gradient(to right,#8B4513 var(--pct,50%),var(--div) var(--pct,50%)) !important;
+}
+input#slInv::-webkit-slider-runnable-track,input#slRep::-webkit-slider-runnable-track{
+  background:linear-gradient(to right,#8B4513 var(--pct,50%),var(--div) var(--pct,50%));
+  height:4px;border-radius:2px;
+}
+input#slInv::-webkit-slider-thumb,input#slRep::-webkit-slider-thumb{background:#8B4513 !important}
+input#slInv::-moz-range-thumb,input#slRep::-moz-range-thumb{background:#8B4513 !important}
+input#slInv::-moz-range-progress,input#slRep::-moz-range-progress{background:#8B4513;height:4px}
+.debt-row { border-bottom:1px solid color-mix(in oklch,var(--sur) 60%,transparent); }
+.debt-row td { padding:5px 8px; }
+.debt-row td:last-child { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+.debt-sep { background:color-mix(in oklch,var(--pri) 8%,transparent); }
+.debt-sep td { padding:6px 8px; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--pri); }
+.debt-neg { color:var(--err) !important; }
+.debt-pos { color:var(--ok) !important; }
+/* ── Sensitivity table ── */
+.sw{overflow-x:auto}
+.stbl{min-width:520px;font-size:11px;font-family:var(--fm);font-variant-numeric:tabular-nums;border-radius:var(--r12);overflow:hidden;border:1px solid var(--bord)}
+.stbl th{background:var(--surfoff);padding:6px 10px;text-align:center;font-weight:700;color:var(--muted);border-bottom:1px solid var(--bord)}
+.stbl td{padding:6px 10px;text-align:center;border-bottom:1px solid var(--div)}
+.stbl tr:last-child td{border-bottom:none}
+.s-lo{background:color-mix(in oklch,var(--err) 15%,var(--surf));color:var(--err)}
+.s-md{background:color-mix(in oklch,var(--warn) 12%,var(--surf));color:var(--warn)}
+.s-hi{background:color-mix(in oklch,var(--ok) 15%,var(--surf));color:var(--ok)}
+.s-bs{background:color-mix(in oklch,var(--pri) 22%,var(--surf));color:var(--pri);font-weight:700;outline:1px solid var(--pri)}
+.s-rl{background:var(--surfoff);color:var(--muted);font-weight:700;text-align:left!important}
+
+/* ── Sliders ── */
+.slg{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.sli{display:flex;flex-direction:column;gap:var(--s2)}
+.slh{display:flex;justify-content:space-between;align-items:baseline}
+.sllab{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.slval{font-size:var(--tsm);font-weight:700;font-family:var(--fm);font-variant-numeric:tabular-nums;color:var(--pri)}
+.scout{background:color-mix(in oklch,var(--pri) 8%,var(--surf));border:1px solid color-mix(in oklch,var(--pri) 28%,var(--bord));border-radius:var(--r16);padding:var(--s5) var(--s6);margin-top:var(--s5)}
+.scog{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s4);margin-top:var(--s4)}
+.oi{display:flex;flex-direction:column;gap:4px}
+.ol{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ov{font-size:var(--tlg);font-weight:800;font-family:var(--fm);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+/* ── Risk ── */
+.rg{display:flex;flex-direction:column;gap:var(--s2)}
+.rr{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);background:var(--surf);border-radius:var(--r8);border:1px solid var(--bord);font-size:var(--txs)}
+.rd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rn{flex:1;font-weight:500}
+.ri{width:88px;text-align:right;font-family:var(--fm);color:var(--muted);font-size:11px}
+.rb{padding:2px 8px;border-radius:var(--rfull);font-size:10px;font-weight:700;white-space:nowrap}
+
+/* ── Bridge chart ── */
+.pbw{height:5px;background:var(--div);border-radius:3px;overflow:hidden;margin-top:3px}
+.pb{height:100%;border-radius:3px;transition:width .6s ease}
+
+/* ── Timeline ── */
+.tl{display:flex;flex-direction:column;gap:var(--s4)}
+.tli{display:flex;gap:var(--s4);font-size:var(--txs)}
+.tll{display:flex;flex-direction:column;align-items:center;gap:3px;width:60px;flex-shrink:0}
+.tld{font-weight:700;color:var(--muted);font-family:var(--fm);font-size:10px;text-align:center}
+.tlln{flex:1;width:1px;background:var(--div);min-height:12px}
+.tldot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.tlb{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r8);padding:var(--s3) var(--s4);flex:1}
+.tltit{font-weight:700;margin-bottom:3px;font-size:var(--tsm)}
+.tldesc{color:var(--muted);line-height:1.5;font-size:var(--txs)}
+
+/* ── Utility ── */
+.mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.dt{font-size:var(--txs);border-radius:var(--r8);overflow:hidden;border:1px solid var(--bord)}
+.dt th{background:var(--surfoff);padding:7px 12px;text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--bord)}
+.dt td{padding:6px 12px;border-bottom:1px solid var(--div);vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}
+.dt tbody tr:hover td{background:var(--surfoff)}
+
+@media(max-width:880px){
+  .app{grid-template-columns:1fr}.sb{display:none}
+  .c2,.c3,.c13,.c31,.scg,.slg,.scog{grid-template-columns:1fr}
+  .ctry{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sb" role="navigation" aria-label="Навигация">
+  <div class="logo">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-label="ВГК лого">
+      <rect width="34" height="34" rx="8" fill="var(--pri)" opacity=".14"/>
+      <!-- Coal hexagon mark -->
+      <polygon points="17,5 26,10 26,22 17,27 8,22 8,10" stroke="var(--pri)" stroke-width="1.8" fill="none"/>
+      <polygon points="17,10 22,13 22,21 17,24 12,21 12,13" fill="var(--pri)" opacity=".35"/>
+      <circle cx="17" cy="17" r="3" fill="var(--pri)"/>
+    </svg>
+    <div>
+      <div class="logo-t">ВГК</div>
+      <div class="logo-s">Coal Dashboard</div>
+    </div>
+  </div>
+  <div class="ns">
+    <div class="nl">Анализ</div>
+    <div class="ni act" onclick="sp('overview',this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>KPI &amp; EBITDA Bridge
+    </div>
+    <div class="ni" onclick="sp('markets',this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="5" cy="11" r="2"/><circle cx="11" cy="5" r="2"/><path d="M3 3h4v4M9 9h4v4" stroke-linecap="round"/></svg>Рынки сбыта
+    </div>
+    <div class="ni" onclick="sp('prices',this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12L5 8L9 10L14 4"/><circle cx="14" cy="4" r="1.5" fill="currentColor" stroke="none"/></svg>Прогноз цен
+    </div>
+    <div class="ni" onclick="sp('scenario',this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 14L6 9L10 11L14 5"/><path d="M11 5h3v3" stroke-linecap="round" stroke-linejoin="round"/></svg>Сценарии &amp; Sensitivity
+    </div>
+    <div class="ni" onclick="sp('risks',this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2L14 13H2Z"/><path d="M8 6v3M8 11v1" stroke-linecap="round"/></svg>Риски
+    </div>
+    <div class="ni" onclick="sp('gascoal',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h7v9H3z"/><path d="M14 3h7v9h-7z"/><path d="M3 16h7v5H3z"/><path d="M14 16h7v5h-7z"/></svg>
+      Gas↔Coal
+    </div>
+    <div class="ni" onclick="sp('timeline',this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="4" cy="4" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="4" cy="12" r="1.5"/><path d="M6.5 4H14M6.5 8H14M6.5 12H14"/></svg>Хронология
+    </div>
+  </div>
+  <div class="sf">
+    <div style="display:flex;align-items:center;gap:8px;font-size:var(--txs);color:var(--muted)">
+      Тема <button onclick="toggleT(this)" style="padding:2px 8px;border-radius:4px;background:var(--surfoff);font-size:11px;transition:background var(--tr)">☀</button>
+    </div>
+    <div style="font-size:10px;color:var(--faint);margin-top:6px">FOB Шахтёрск · 4600 ккал · 2026</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div class="topbar">
+    <div>
+      <h1 class="tt">ВГК — Восточная Горнодобывающая Компания</h1>
+      <p class="tsub">Угольный экспорт · FOB Шахтёрск · 4600 ккал </p>
+    </div>
+    <div class="badges">
+      <span class="badge bok">Экспортёр #1 Сахалин</span>
+      <span class="badge bpri">FOB Шахтёрск</span>
+      <span class="badge bwarn">Энергетический переход — риск</span>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab act" onclick="sp('overview',this)" role="tab">KPI &amp; Bridge</button>
+    <button class="tab" onclick="sp('markets',this)" role="tab">Рынки сбыта</button>
+    <button class="tab" onclick="sp('prices',this)" role="tab">Прогноз цен</button>
+    <button class="tab" onclick="sp('scenario',this)" role="tab">Сценарии</button>
+    <button class="tab" onclick="sp('risks',this)" role="tab">Риски</button>
+    <button class="tab" onclick="sp('gascoal',this)" role="tab">⛽ Gas↔Coal</button>
+    <button class="tab" onclick="sp('timeline',this)" role="tab">Хронология</button>
+  </div>
+
+  <!-- ══ PANEL: OVERVIEW ══ -->
+  <div class="panel act" id="panel-overview" role="tabpanel">
+    <div>
+      <div class="sh"><div class="st">Финансовый KPI Strip</div><div class="ss">Оценочные показатели · 2024А / 2025А / 2026E</div></div>
+      <div class="kg">
+        <div class="kc"><div class="kl">Объём добычи</div><div class="kv pc">~19 млн<span style="font-size:.42em;opacity:.7"> т/год</span></div><div class="kd fl">Оценочно</div></div>
+        <div class="kc"><div class="kl">Realized price Q1'26</div><div class="kv" style="color:var(--pri)">$61<span style="font-size:.42em;opacity:.7">/т</span></div><div class="kd up">▲ Сильный спайк</div></div>
+        <div class="kc"><div class="kl">Avg price 2026 Base</div><div class="kv" style="color:var(--warn)">$75<span style="font-size:.42em;opacity:.7">/т</span></div><div class="kd fl">FOB 4600 ккал</div></div>
+        <div class="kc"><div class="kl">EBITDA/т (base)</div><div class="kv" style="color:var(--ok)">$30<span style="font-size:.42em;opacity:.7">/т</span></div><div class="kd fl">cost+log $45/т</div></div>
+        <div class="kc"><div class="kl">EBITDA 2026E</div><div class="kv pc">$570<span style="font-size:.42em;opacity:.7"> млн</span></div><div class="kd fl">Base case</div></div>
+        <div class="kc"><div class="kl">Avg USD/RUB 2026</div><div class="kv">~80<span style="font-size:.42em;opacity:.7"> ₽</span></div><div class="kd wn">Base case</div></div>
+        <div class="kc"><div class="kl">Себестоим. добычи</div><div class="kv">$45<span style="font-size:.42em;opacity:.7">/т</span></div><div class="kd up">▲ Фиксированный</div></div>
+        <div class="kc"><div class="kl">EBITDA margin</div><div class="kv" style="color:var(--ok)">~40<span style="font-size:.42em;opacity:.7">%</span></div><div class="kd fl">Base</div></div>
+      </div>
+    </div>
+
+    <div class="cr c13">
+      <div class="cc"><div class="ct">EBITDA Bridge 2025A → 2026E ($/т)</div><canvas id="cBridge"></canvas></div>
+      <div class="cc"><div class="ct">Цена угля FOB Шахтёрск 4600 ккал — исторически и прогноз</div><canvas id="cPrice"></canvas></div>
+    </div>
+
+    <div class="cr c2">
+      <div class="cc"><div class="ct">EBITDA/т при разных ценах</div><canvas id="cEbitdaT"></canvas></div>
+      <div class="cc">
+        <div class="ct">Revenue mix: страны сбыта </div>
+        <canvas id="cMix"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: MARKETS ══ -->
+  <div class="panel" id="panel-markets" role="tabpanel">
+    <div>
+      <div class="sh"><div class="st">Ключевые рынки сбыта угля ВГК</div><div class="ss">Данные: собственная аналитика · 2026</div></div>
+      <div class="sw">
+        <table class="ctry" aria-label="Рынки сбыта">
+          <thead>
+            <tr>
+              <th>Страна</th>
+              <th>Доля<br>сбыта</th>
+              <th>Рынок</th>
+              <th>ВВП<br>2026E</th>
+              <th>Добыча<br>угля</th>
+              <th>Импорт<br>угля</th>
+              <th>Запрет на<br>сжигание угля</th>
+              <th>Импорт<br>СПГ</th>
+              <th>Альтернативные<br>источники</th>
+              <th>Комментарий</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="cdot" style="background:var(--err)"></span><span class="cname">Китай</span></td>
+              <td><span class="badge bpri">48%</span></td>
+              <td><span class="cdot" style="background:var(--ok)"></span>Бычий</td>
+              <td class="mono">+4,4%</td>
+              <td class="mono">3,8 млрд т</td>
+              <td class="mono">345 млн т</td>
+              <td><span class="sig sig-g">нет</span></td>
+              <td><span class="sig sig-r">затруд.</span></td>
+              <td class="cmnt">ВИЭ 38%, цель 2060</td>
+              <td class="cmnt">Высокий спрос на кондиц. летом, восстановл. пром. произв. Цель 2060: углер. нейтральность</td>
+            </tr>
+            <tr>
+              <td><span class="cdot" style="background:var(--warn)"></span><span class="cname">Ю. Корея</span></td>
+              <td><span class="badge bpri">25%</span></td>
+              <td><span class="cdot" style="background:var(--ok)"></span>Бычий</td>
+              <td class="mono">+1,9%</td>
+              <td class="mono">0,5 млн т</td>
+              <td class="mono">71 млн т</td>
+              <td><span class="sig sig-y">временно снят</span></td>
+              <td><span class="sig sig-r">затруд.</span></td>
+              <td class="cmnt">АЭС (+2 блока 2027–28)</td>
+              <td class="cmnt">Развитие полупроводникового кластера, энергоблок линии 750 кДж. Переход на уголь ради экономии СПГ. <strong>Цель 2040:</strong> полный отказ от угля</td>
+            </tr>
+            <tr>
+              <td><span class="cdot" style="background:var(--ok)"></span><span class="cname">Вьетнам</span></td>
+              <td><span class="badge bpri">19%</span></td>
+              <td><span class="cdot" style="background:var(--ok)"></span>Бычий</td>
+              <td class="mono">+7,1%</td>
+              <td class="mono">43 млн т</td>
+              <td class="mono">47 млн т</td>
+              <td><span class="sig sig-g">нет</span></td>
+              <td><span class="sig sig-r">затруд.</span></td>
+              <td class="cmnt">ВИЭ к 2050 (30%→), СПГ 12%</td>
+              <td class="cmnt"><strong>2025:</strong> рекордный импорт. Пик спроса 2030–2035: 125 млн т/год. <strong>Цель 2050:</strong> полный отказ от угля. Новые угольные ТЭС не будут строить после 2030</td>
+            </tr>
+            <tr>
+              <td><span class="cdot" style="background:var(--blue)"></span><span class="cname">Тайвань</span></td>
+              <td><span class="badge bpri">3%</span></td>
+              <td><span class="cdot" style="background:var(--ok)"></span>Бычий</td>
+              <td class="mono">+5,2%</td>
+              <td class="mono">—</td>
+              <td class="mono">52 млн т</td>
+              <td><span class="sig sig-g">нет</span></td>
+              <td><span class="sig sig-r">затруд.</span></td>
+              <td class="cmnt">СПГ 50% к 2027, ВИЭ 27%, АЭС 2028–29</td>
+              <td class="cmnt">Уголь 35–40% генерации. <strong>Целевой уровень генерации:</strong> 30%</td>
+            </tr>
+            <tr>
+              <td><span class="cdot" style="background:var(--gold)"></span><span class="cname">Япония</span></td>
+              <td><span class="badge bnt">1%</span></td>
+              <td><span class="cdot" style="background:var(--warn)"></span>Нейтр.</td>
+              <td class="mono">+0,7%</td>
+              <td class="mono">0,5 млн т</td>
+              <td class="mono">104 млн т</td>
+              <td><span class="sig sig-y">временно снят</span></td>
+              <td><span class="sig sig-r">затруд.</span></td>
+              <td class="cmnt">ВИЭ 20%, АЭС 10%</td>
+              <td class="cmnt">Переход на уголь ради экономии СПГ. Уголь ~25% генерации. <strong>Цель 2035:</strong> декарбонизация</td>
+            </tr>
+            <tr>
+              <td><span class="cdot" style="background:var(--slate)"></span><span class="cname">Индонезия</span></td>
+              <td><span class="badge bnt">2%</span></td>
+              <td><span class="cdot" style="background:var(--warn)"></span>Нейтр.</td>
+              <td class="mono">+5,0%</td>
+              <td class="mono">790 млн т</td>
+              <td class="mono">0,94 млн т</td>
+              <td><span class="sig sig-g">нет</span></td>
+              <td><span class="sig sig-r">затруд.</span></td>
+              <td class="cmnt">ВИЭ 34% к 2030; уголь 61%</td>
+              <td class="cmnt">Конкурент: экспортные квоты снижают индонезийскую добычу и предложение → поддержка цены для ВГК</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="cr c2">
+      <div class="cc"><div class="ct">Demand score по странам (сигнал для realized price)</div><canvas id="cDemand"></canvas></div>
+      <div class="cc">
+        <div class="ct">Ключевые сигналы рынка</div>
+        <div style="display:flex;flex-direction:column;gap:var(--s3);margin-top:var(--s2)">
+          <div class="rr"><div class="rd" style="background:var(--ok)"></div><div class="rn"><strong>Индонезийские квоты</strong> — экспорт ограничен </div></div>
+          <div class="rr"><div class="rd" style="background:var(--ok)"></div><div class="rn"><strong>Дефицит СПГ</strong> — Япония, Корея, Тайвань увеличивают использование угольных ТЭС</div></div>
+          <div class="rr"><div class="rd" style="background:var(--ok)"></div><div class="rn"><strong>Вьетнам</strong> — рекордный импорт 2025; пик спроса прогнозируется 2030–2035</div></div>
+          <div class="rr"><div class="rd" style="background:var(--warn)"></div><div class="rn"><strong>Китай </strong> — рост внутренней добычи давит на импорт угля</div></div>
+          <div class="rr"><div class="rd" style="background:var(--warn)"></div><div class="rn"><strong>Запуск АЭС в Корее и Японии</strong> — среднесрочно медвежий сигнал для угля</div></div>
+          <div class="rr"><div class="rd" style="background:var(--err)"></div><div class="rn"><strong>Energy Transition</strong> — все страны имеют цели по отказу от угля к 2030–2060</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: PRICES ══ -->
+  <div class="panel" id="panel-prices" role="tabpanel">
+    <div class="cr c2">
+      <div>
+        <div class="sh"><div class="st">Прогноз цены FOB Шахтёрск (4600 ккал)</div><div class="ss">по индексу ICI3</div></div>
+        <table class="ptb" aria-label="Прогноз цен">
+          <thead>
+            <tr><th>Период</th><th>Цена ($/т)</th><th>Комментарий</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Q1 2026</td><td>$61,0</td><td>Сильный спайк из-за СПГ-кризиса, индонезийские квоты</td></tr>
+            <tr><td>Q2 2026</td><td>$73,9</td><td>Сезонный спрос в Азии (летний пик), экспорт Индонезии квотирован</td></tr>
+            <tr><td>Q3 2026</td><td>$64,6</td><td>Сезонный спрос в Азии (летний пик), продолжение квот</td></tr>
+            <tr><td>Q4 2026</td><td>$63,6</td><td>Пик зимнего спроса</td></tr>
+            <tr class="avg"><td>Среднее 2026E</td><td>$65,8</td><td>
+            <tr><td>2027E</td><td>$65,0</td><td>Китай и Индия активно используют уголь, но всё больше закрывают спрос собств. добычей</td></tr>
+            <tr><td>2028E</td><td>$62,0</td><td>Доля угля в азиатских странах высока, новых угольных проектов меньше, часть спроса закрывает СПГ + ВИЭ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cc"><div class="ct">Динамика цены FOB 4600 ккал, 2022–2028E</div><canvas id="cPriceFull"></canvas></div>
+    </div>
+
+    <div class="cr c2">
+      <div class="cc"><div class="ct">EBITDA/т при прогнозных ценах (cost $40/т)</div><canvas id="cEbitdaQ"></canvas></div>
+      <div class="cc">
+        <div class="ct">Факторы, влияющие на цену реализации vs. бенчмарка</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:var(--s3)">
+          <div style="display:flex;justify-content:space-between;padding:var(--s3) var(--s4);background:var(--surfoff);border-radius:var(--r8);font-size:var(--txs)">
+            <span>Калорийность — 4600 ккал vs. 6000 ккал Newcastle</span>
+            <span class="mono" style="color:var(--err)">−$20–25/т дисконт</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:var(--s3) var(--s4);background:var(--surfoff);border-radius:var(--r8);font-size:var(--txs)">
+            <span>Логистика (Шахтёрск → порт назначения в 28 км)</span>
+            <span class="mono" style="color:var(--err)">−$8–12/т</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:var(--s3) var(--s4);background:var(--surfoff);border-radius:var(--r8);font-size:var(--txs)">
+            <span>Индонезийские квоты → "зеленый флаг" для ВГК</span>
+            <span class="mono" style="color:var(--ok)">+$3–5/т</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:var(--s3) var(--s4);background:var(--surfoff);border-radius:var(--r8);font-size:var(--txs)">
+            <span> дефицит СПГ → переход на уголь</span>
+            <span class="mono" style="color:var(--ok)">+$2–4/т</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:var(--s3) var(--s4);background:var(--surfoff);border-radius:var(--r8);font-size:var(--txs)">
+            <span>USD/RUB влияние на рублёвую EBITDA</span>
+            <span class="mono" style="color:var(--pri)">~80 ₽/$ base</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: SCENARIO ══ -->
+  <div class="panel" id="panel-scenario" role="tabpanel">
+    <div>
+      <div class="sh"><div class="st">Интерактивная модель EBITDA</div><div class="ss">Двигайте ползунки — пересчёт в реальном времени</div></div>
+      <div class="slg">
+        <div class="sli"><div class="slh"><div class="sllab">Объём добычи (млн т)</div><div class="slval" id="svVol">19,0</div></div><input type="range" id="slVol" min="12" max="22" step="0.1" value="19" oninput="recalc()"></div>
+        <div class="sli"><div class="slh"><div class="sllab">Цена угля ($/т)</div><div class="slval" id="svP">75,0</div></div><input type="range" id="slP" min="40" max="100" step="0.5" value="75" oninput="recalc()"></div>
+        <div class="sli"><div class="slh"><div class="sllab">Себестоимость добычи ($/т)</div><div class="slval" id="svC">40,0</div></div><input type="range" id="slC" min="25" max="60" step="0.5" value="40" oninput="recalc()"></div>
+        <div class="sli"><div class="slh"><div class="sllab">Логистика / отгрузка ($/т)</div><div class="slval" id="svL">5,0</div></div><input type="range" id="slL" min="5" max="20" step="0.5" value="5" oninput="recalc()"></div>
+        <div class="sli"><div class="slh"><div class="sllab">Demand premium (%)</div><div class="slval" id="svD">0</div></div><input type="range" id="slD" min="-10" max="15" step="0.5" value="0" oninput="recalc()"></div>
+        <div class="sli"><div class="slh"><div class="sllab">USD/RUB</div><div class="slval" id="svFX">80</div></div><input type="range" id="slFX" min="60" max="100" step="1" value="80" oninput="recalc()"></div>
+      </div>
+      <div class="scout">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--pri)">Расчётные показатели</div>
+        <div class="scog">
+          <div class="oi"><div class="ol">Realized Price</div><div class="ov" id="oRP" style="color:var(--pri)">—</div></div>
+          <div class="oi"><div class="ol">EBITDA/т ($)</div><div class="ov" id="oET" style="color:var(--ok)">—</div></div>
+          <div class="oi"><div class="ol">EBITDA ($млн)</div><div class="ov" id="oEU" style="color:var(--pri)">—</div></div>
+          <div class="oi"><div class="ol">EBITDA (₽млрд)</div><div class="ov" id="oER" style="color:var(--gold)">—</div></div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="cc" style="margin-top:20px">
+      <div class="ct">Расчет чистого денежного потока (млн руб.)</div>
+      <div style="padding:16px 20px">
+        <!-- Sliders -->
+        <div class="slg" style="margin-bottom:12px">
+          <div class="sli"><div class="slh"><div class="sllab">Долг на начало года (млн руб.)</div><div class="slval" id="dvDebt">55 670</div></div><input type="range" id="slDebt" class="slider-brown" min="20000" max="70000" step="1000" value="55670" oninput="recalcDebt()"></div>
+          <div class="sli"><div class="slh"><div class="sllab">Ставка по долгу (%)</div><div class="slval" id="dvRate">16,5%</div></div><input type="range" id="slRate" class="slider-brown" min="8" max="25" step="0.5" value="16.5" oninput="recalcDebt()"></div>
+        </div>
+        <div class="sli"><div class="slh"><div class="sllab">Инвестиции (млн руб.)</div><div class="slval" id="dvInv">10 000</div></div><input type="range" id="slInv" class="slider-brown" min="5000" max="20000" step="1000" value="10000" oninput="recalcDebt()"></div>
+        <div class="sli" style="margin-top:8px"><div class="slh"><div class="sllab">Погашение долга (млн руб.)</div><div class="slval" id="dvRep">10 000</div></div><input type="range" id="slRep" class="slider-brown" min="5000" max="30000" step="1000" value="10000" oninput="recalcDebt()"></div>
+
+        <!-- Table -->
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:14px">
+          <colgroup><col style="width:62%"><col style="width:38%"></colgroup>
+          <tbody id="debtTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="sh"><div class="st">Три сценария 2026E</div><div class="ss">Объём 19 млн т · cost+logistics $45/т · USD/RUB 80 · Цена base $75/т</div></div>
+      <div class="scg">
+        <div class="sc scbear">
+          <div class="sctag dn">⬇ Bear</div>
+          <div class="scval dn">$95 млн</div>
+          <div class="scrow"><span>Цена угля</span><span>$50/т</span></div>
+          <div class="scrow"><span>Объём</span><span>19 млн т</span></div>
+          <div class="scrow"><span>EBITDA/т</span><span>$5/т</span></div>
+          <div class="scrow"><span>USD/RUB</span><span>70</span></div>
+          <div class="scrow"><span>EBITDA ₽</span><span>~6,7 млрд ₽</span></div>
+          <div class="scrow"><span>Margin</span><span>~10%</span></div>
+          <div style="font-size:10px;color:var(--err);margin-top:8px">Слабый азиатский спрос, дешёвый СПГ, избыток внутреннего предложения в Китае</div>
+        </div>
+        <div class="sc scbase">
+          <div class="sctag pc">◆ Base</div>
+          <div class="scval pc">$570 млн</div>
+          <div class="scrow"><span>Цена угля</span><span>$75/т</span></div>
+          <div class="scrow"><span>Объём</span><span>19 млн т</span></div>
+          <div class="scrow"><span>EBITDA/т</span><span>$30/т</span></div>
+          <div class="scrow"><span>USD/RUB</span><span>80</span></div>
+          <div class="scrow"><span>EBITDA ₽</span><span>~45,6 млрд ₽</span></div>
+          <div class="scrow"><span>Margin</span><span>~40%</span></div>
+          <div style="font-size:10px;color:var(--pri);margin-top:8px">Базовая цена $75/т: умеренное восстановление после коррекции, стабильный азиатский спрос</div>
+        </div>
+        <div class="sc scbull">
+          <div class="sctag up">▲ Bull</div>
+          <div class="scval up">$665 млн</div>
+          <div class="scrow"><span>Цена угля</span><span>$80/т</span></div>
+          <div class="scrow"><span>Объём</span><span>19 млн т</span></div>
+          <div class="scrow"><span>EBITDA/т</span><span>$35/т</span></div>
+          <div class="scrow"><span>USD/RUB</span><span>85</span></div>
+          <div class="scrow"><span>EBITDA ₽</span><span>~56,5 млрд ₽</span></div>
+          <div class="scrow"><span>Margin</span><span>~44%</span></div>
+          <div style="font-size:10px;color:var(--ok);margin-top:8px">Острый дефицит СПГ, Вьетнам рекордно закупает уголь, Корея временно сняла запрет на сжигание угля</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cc">
+      <div class="ct">Sensitivity matrix: EBITDA ($млн) — цена угля × курс USD/RUB (cost+logistics $45, добыча 19 млн т)</div>
+      <div class="sw"><table class="stbl" id="sensTab" aria-label="Sensitivity matrix"></table></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: RISKS ══ -->
+  <div class="panel" id="panel-risks" role="tabpanel">
+    <div class="sh"><div class="st">Матрица рисков и возможностей</div><div class="ss">Горизонт 2026–2030</div></div>
+    <div class="cr c2">
+      <div class="cc">
+        <div class="ct">Ключевые риски</div>
+        <div class="rg">
+          <div class="rr"><div class="rd" style="background:var(--err)"></div><div class="rn"><strong>Energy transition</strong> — все рынки сбыта имеют официальные цели по отказу от угля к 2035–2060</div><span class="rb" style="background:color-mix(in oklch,var(--err) 15%,transparent);color:var(--err)">Критич. долг.</span><div class="ri">Спрос −35% к 2035</div></div>
+          <div class="rr"><div class="rd" style="background:var(--err)"></div><div class="rn"><strong>Запуск АЭС</strong> в Корее и Японии — два новых блока в 2027–28 вытеснят уголь из генерации</div><span class="rb" style="background:color-mix(in oklch,var(--err) 15%,transparent);color:var(--err)">Высокий</span><div class="ri">КР/ЯП demand −10%</div></div>
+          <div class="rr"><div class="rd" style="background:var(--warn)"></div><div class="rn"><strong>Внутренее производство в Китае </strong> — 4,7 млрд т; рост внутр. производства давит на импорт</div><span class="rb" style="background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)">Средний</span><div class="ri">Импорт волатил.</div></div>
+          <div class="rr"><div class="rd" style="background:var(--warn)"></div><div class="rn"><strong>Нормализация цен на СПГ</strong> — если дефицит СПГ уйдёт, некоторые страны снова перейдут с угля на газ</div><span class="rb" style="background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)">Средний</span><div class="ri">Price −$5–8/т</div></div>
+          <div class="rr"><div class="rd" style="background:var(--warn)"></div><div class="rn"><strong>USD/RUB укрепление</strong> — снижает рублёвую EBITDA при долларовой выручке</div><span class="rb" style="background:color-mix(in oklch,var(--warn) 15%,transparent);color:var(--warn)">Средний</span><div class="ri">−7% EBITDA₽ / −5₽</div></div>
+          <div class="rr"><div class="rd" style="background:var(--gold)"></div><div class="rn"><strong>Логистика</strong> — ограниченная пропускная способность порта Шахтёрск</div><span class="rb" style="background:color-mix(in oklch,var(--gold) 15%,transparent);color:var(--gold)">Умеренный</span><div class="ri">COGS +$2–4/т</div></div>
+          <div class="rr"><div class="rd" style="background:var(--gold)"></div><div class="rn"><strong>Геополитика</strong> — санкционные ограничения на расчёты и страхование судов</div><span class="rb" style="background:color-mix(in oklch,var(--gold) 15%,transparent);color:var(--gold)">Умеренный</span><div class="ri">Операц.</div></div>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="ct">Возможности (upside)</div>
+        <div class="rg">
+          <div class="rr"><div class="rd" style="background:var(--ok)"></div><div class="rn"><strong>Вьетнам</strong> — пик спроса 2030–35 до 125 млн т/год; ВГК — географически близкий поставщик</div><span class="rb" style="background:color-mix(in oklch,var(--ok) 15%,transparent);color:var(--ok)">Upside</span><div class="ri">+2–3 млн т объём</div></div>
+          <div class="rr"><div class="rd" style="background:var(--ok)"></div><div class="rn"><strong>Индонезийские квоты</strong> — снижение индонезийского предложения держит цену выше бенчмарка</div><span class="rb" style="background:color-mix(in oklch,var(--ok) 15%,transparent);color:var(--ok)">Upside</span><div class="ri">+$3–5/т premium</div></div>
+          <div class="rr"><div class="rd" style="background:var(--ok)"></div><div class="rn"><strong>Корея: снятие ограничения на сжигание угля</strong> — временное снятие лимита 80% нагрузки на угольные ТЭС → рост спроса</div><span class="rb" style="background:color-mix(in oklch,var(--ok) 15%,transparent);color:var(--ok)">Upside</span><div class="ri">+15–20 млн т рынок</div></div>
+          <div class="rr"><div class="rd" style="background:var(--pri)"></div><div class="rn"><strong>Слабый рубль</strong> — при USD/RUB 85+ рублёвая EBITDA растёт пропорционально</div><span class="rb" style="background:color-mix(in oklch,var(--pri) 18%,transparent);color:var(--pri)">FX upside</span><div class="ri">+10% EBITDA₽ / +7₽</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="cr c2">
+      <div class="cc"><div class="ct">Radar: риски vs. возможности</div><canvas id="cRisk"></canvas></div>
+      <div class="cc"><div class="ct">Долгосрочный прогноз спроса по регионам (млн т импорта угля)</div><canvas id="cLT"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: TIMELINE ══ -->
+  <div class="panel" id="panel-timeline" role="tabpanel">
+    <div class="sh"><div class="st">Хронология</div><div class="ss">ВГК и угольный рынок Азии</div></div>
+    <div class="tl">
+      <div class="tli"><div class="tll"><div class="tld">2011</div><div class="tldot" style="background:var(--pri)"></div><div class="tlln"></div></div><div class="tlb"><div class="tltit">Основание ВГК</div><div class="tldesc">Восточная Горнодобывающая Компания создана для разработки Солнцевского месторождения на Сахалине. Первые экспортные отгрузки через порт Шахтёрск в страны АТР.</div></div></div>
+      <div class="tli"><div class="tll"><div class="tld">2019–21</div><div class="tldot" style="background:var(--ok)"></div><div class="tlln"></div></div><div class="tlb"><div class="tltit">Рост экспорта: пик цены $90–100/т</div><div class="tldesc">Рост азиатского спроса. ВГК наращивает добычу, расширяет портовую инфраструктуру. Цены на низкокалорийный уголь поднялись до $90–100/т на фоне энергокризиса 2021 г.</div></div></div>
+      <div class="tli"><div class="tll"><div class="tld">2022</div><div class="tldot" style="background:var(--warn)"></div><div class="tlln"></div></div><div class="tlb"><div class="tltit">Переориентация потоков: санкции против РФ</div><div class="tldesc">Европейский рынок закрылся. Японские и корейские компании под давлением — сокращают долю ВГК. Рост Китая, Вьетнама, Тайваня как компенсирующих рынков. Цена в моменте до $80+/т.</div></div></div>
+      <div class="tli"><div class="tll"><div class="tld">2023–24</div><div class="tldot" style="background:var(--gold)"></div><div class="tlln"></div></div><div class="tlb"><div class="tltit">Нормализация цен: $55–65/т</div><div class="tldesc">После спайка 2022 цены скорректировались до $55–65/т. ВГК сохраняет объём ~9 млн т/год. Вьетнам становится ключевым растущим рынком. Индонезийские квоты поддерживают цену.</div></div></div>
+      <div class="tli"><div class="tll"><div class="tld">Q1 2026</div><div class="tldot" style="background:var(--pri)"></div><div class="tlln"></div></div><div class="tlb"><div class="tltit">Новый спайк: $58 → $63,2/т</div><div class="tldesc">СПГ-кризис в Азии зима 2025/26 вынуждает Японию и Корею наращивать coal dispatch. Индонезийские экспортные квоты не позволяют нарастить поставки. ВГК выигрывает от спайка.</div></div></div>
+    </div>
+  </div>
+
+<!-- ══ PANEL: GAS-TO-COAL SWITCH ══ -->
+  <div class="panel" id="panel-gascoal" role="tabpanel">
+    <div class="sh">
+      <div class="st">Gas↔Coal Switch Monitor</div>
+      <div class="ss">Уголь 4 600 kcal NAR · АТР · Пересчёт в реальном времени</div>
+    </div>
+
+    <div class="cr c2" style="align-items:start">
+
+      <!-- ① Ползунки -->
+      <div class="cc">
+        <div class="ct">① Входные параметры</div>
+        <div style="display:flex;flex-direction:column;gap:var(--s5);margin-top:var(--s4)">
+
+          <div class="sli">
+            <div class="slh">
+              <div class="sllab">Цена СПГ Азия JKM ($/MMBtu)</div>
+              <div class="slval" id="g2c-jkm-val">15,00</div>
+            </div>
+            <input type="range" id="g2c-jkm" min="5" max="30" step="5" value="15">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px">
+              <span>$5</span><span>$10</span><span>$15</span><span>$20</span><span>$25</span><span>$30</span>
+            </div>
+          </div>
+
+          <div class="sli">
+            <div class="slh">
+              <div class="sllab">Уголь ICI3 FOB 4600 kcal ($/т)</div>
+              <div class="slval" id="g2c-coal-val">75,00</div>
+            </div>
+            <input type="range" id="g2c-coal" min="50" max="100" step="5" value="75">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:2px">
+              <span>$50</span><span>$60</span><span>$70</span><span>$80</span><span>$90</span><span>$100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Технические допущения -->
+        <div style="margin-top:var(--s5)">
+          <div class="ct" style="margin-bottom:var(--s3)">② Технические допущения</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)">
+            <div class="oi"><div class="ol">Теплотворность угля</div><div class="ov">4 600 kcal/kg NAR</div></div>
+            <div class="oi"><div class="ol">MMBtu / т угля</div><div class="ov">18,28 MMBtu/т</div></div>
+            <div class="oi"><div class="ol">Heat rate уголь. ЭС</div><div class="ov">10 000 BTU/kWh</div></div>
+            <div class="oi"><div class="ol">Heat rate CCGT (газ)</div><div class="ov">7 000 BTU/kWh</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Расчётные показатели + сигнал -->
+      <div class="cc" style="display:flex;flex-direction:column;gap:var(--s5)">
+        <div>
+          <div class="ct" style="margin-bottom:var(--s3)">③ Расчётные показатели</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)">
+            <div class="oi">
+              <div class="ol">Уголь ICI3 (4600 kcal), $/MMBtu</div>
+              <div class="ov" id="g2c-out-coal-mmbtu" style="color:var(--ok)">—</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">= ICI3($/т) ÷ 18,28</div>
+            </div>
+            <div class="oi">
+              <div class="ol">Switching price JKM ($/MMBtu)</div>
+              <div class="ov" id="g2c-out-switch" style="color:var(--warn)">—</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">= Уголь$/MMBtu × (10 000÷7 000)</div>
+            </div>
+            <div class="oi">
+              <div class="ol">Ratio: JKM / уголь АТР 4600</div>
+              <div class="ov" id="g2c-out-ratio" style="color:var(--pri)">—</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">= JKM ÷ Switching price</div>
+            </div>
+            <div class="oi">
+              <div class="ol">Spread JKM vs switching price</div>
+              <div class="ov" id="g2c-out-spread" style="color:var(--gold)">—</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px">= Switching price − JKM</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Сигнальная панель -->
+        <div id="g2c-signal-box" style="border-radius:var(--r16);padding:var(--s5) var(--s6);border:1px solid var(--bord);text-align:center">
+          <div style="font-size:var(--txl);font-weight:800;letter-spacing:-.02em" id="g2c-signal-icon">—</div>
+          <div style="font-size:var(--tsm);font-weight:600;margin-top:var(--s2)" id="g2c-signal-text">—</div>
+          <div style="font-size:var(--txs);color:var(--muted);margin-top:6px" id="g2c-signal-desc">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ Таблица регионов -->
+    <div class="cc" style="margin-top:var(--s5)">
+      <div class="ct">④ Switching table — АТР (JKM vs ICI 3)</div>
+      <div class="sw" style="margin-top:var(--s3)">
+        <table class="stbl" style="width:100%">
+          <thead>
+            <tr>
+              <th>Регион / Пара</th>
+              <th>Показатель</th>
+              <th>Текущее значение</th>
+              <th>Статус</th>
+              <th>Комментарий</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>АТР</strong><br><span style="font-size:10px;color:var(--muted)">JKM vs ICI 3 (4600 kcal)</span></td>
+              <td>Ratio: JKM / уголь АТР 4600 (по теплу)</td>
+              <td style="font-weight:700;font-size:var(--tmd)" id="g2c-tbl-ratio">—</td>
+              <td id="g2c-tbl-status">—</td>
+              <td id="g2c-tbl-comment" style="font-size:var(--txs);color:var(--muted)">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:var(--s3);line-height:1.6">
+        <strong>Пороги:</strong>&nbsp;
+        🟢 <strong>уголь выгоднее</strong> — ratio &gt; 1,8 &nbsp;|&nbsp;
+        🟡 <strong>зона неопределённости</strong> — 1,3–1,8 &nbsp;|&nbsp;
+        🔴 <strong>газ конкурентоспособен</strong> — ratio &lt; 1,3
+      </div>
+    </div>
+
+  </div>
+
+</main>
+</div>
+
+<script>
+// ── Gas-to-Coal Switch — инициализируется при переключении на вкладку
+function initGasCoal() {
+  var jkmEl  = document.getElementById('g2c-jkm');
+  var coalEl = document.getElementById('g2c-coal');
+  if (!jkmEl || !coalEl) return;
+  if (jkmEl._g2cBound) { calc(); return; } // уже подключено — только пересчитать
+
+  function calc() {
+    var jkm   = parseFloat(jkmEl.value);   // $/MMBtu
+    var coalT = parseFloat(coalEl.value);  // $/т
+
+    // Обновить подписи ползунков
+    document.getElementById('g2c-jkm-val').textContent  = jkm.toFixed(2).replace('.', ',');
+    document.getElementById('g2c-coal-val').textContent = coalT.toFixed(2).replace('.', ',');
+
+    // ─── Формулы ───────────────────────────────────────────────
+    // 1) Уголь ICI3 в $/MMBtu  (4600 kcal × 4.1868 / 1055.06 = 18.2727 MMBtu/т)
+    var MMBTU_PER_TON = 18.28;
+    var coalMmbtu = coalT / MMBTU_PER_TON;                // $/MMBtu
+
+    // 2) Switching price JKM = coal_mmbtu × (HR_coal / HR_gas) = coal × (10000/7000)
+    var switchPrice = coalMmbtu * (10000 / 7000);          // $/MMBtu
+
+    // 3) Ratio = JKM / switching price
+    var ratio = jkm / switchPrice;
+
+    // 4) Spread = switching price − JKM
+    var spread = switchPrice - jkm;
+    // ────────────────────────────────────────────────────────────
+
+    // Вывод расчётных показателей
+    document.getElementById('g2c-out-coal-mmbtu').textContent = '$' + coalMmbtu.toFixed(2) + '/MMBtu';
+    document.getElementById('g2c-out-switch').textContent     = '$' + switchPrice.toFixed(2) + '/MMBtu';
+    document.getElementById('g2c-out-ratio').textContent      = ratio.toFixed(2) + '×';
+    document.getElementById('g2c-out-spread').textContent     = (spread >= 0 ? '+' : '') + spread.toFixed(2) + ' $/MMBtu';
+
+    // Сигнальная панель
+    var box  = document.getElementById('g2c-signal-box');
+    var icon = document.getElementById('g2c-signal-icon');
+    var txt  = document.getElementById('g2c-signal-text');
+    var desc = document.getElementById('g2c-signal-desc');
+
+    var tblRatio   = document.getElementById('g2c-tbl-ratio');
+    var tblStatus  = document.getElementById('g2c-tbl-status');
+    var tblComment = document.getElementById('g2c-tbl-comment');
+
+    var statusText, statusColor, commentText, bgColor, borderColor;
+
+    if (ratio > 1.8) {
+      bgColor     = 'color-mix(in oklch,var(--ok) 10%,var(--surf))';
+      borderColor = 'color-mix(in oklch,var(--ok) 40%,var(--bord))';
+      icon.style.color = 'var(--ok)';
+      icon.textContent = '🟢 УГОЛЬ в приоритете';
+      txt.textContent  = 'Ratio ' + ratio.toFixed(2) + '× > 1,8 · Spread ' + spread.toFixed(2) + ' $/MMBtu';
+      desc.textContent = 'Ratio > 1,8 → электростанциям АТР выгоднее сжигать уголь. Рост угольного спроса — позитив для ВГК.';
+      statusText  = '🟢 уголь выгоднее';
+      statusColor = 'var(--ok)';
+      commentText = 'уголь выгоднее (ratio > 1,8)';
+    } else if (ratio >= 1.3) {
+      bgColor     = 'color-mix(in oklch,var(--gold) 10%,var(--surf))';
+      borderColor = 'color-mix(in oklch,var(--gold) 40%,var(--bord))';
+      icon.style.color = 'var(--gold)';
+      icon.textContent = '🟡 НЕЙТРАЛЬНО — зона неопределённости';
+      txt.textContent  = 'Ratio ' + ratio.toFixed(2) + '× (1,3–1,8) · Spread ' + spread.toFixed(2) + ' $/MMBtu';
+      desc.textContent = 'Решение зависит от локальных условий, контрактов и логистических издержек.';
+      statusText  = '🟡 нейтрально';
+      statusColor = 'var(--gold)';
+      commentText = 'зона неопределённости (1,3–1,8)';
+    } else {
+      bgColor     = 'color-mix(in oklch,var(--err) 10%,var(--surf))';
+      borderColor = 'color-mix(in oklch,var(--err) 40%,var(--bord))';
+      icon.style.color = 'var(--err)';
+      icon.textContent = '🔴 ГАЗ конкурентоспособен';
+      txt.textContent  = 'Ratio ' + ratio.toFixed(2) + '× < 1,3 · Spread ' + spread.toFixed(2) + ' $/MMBtu';
+      desc.textContent = 'Газ выгоднее угля. Угольный спрос под давлением. Возможен обратный переход — с угля на газ.';
+      statusText  = '🔴 газ конкурентоспособен';
+      statusColor = 'var(--err)';
+      commentText = 'газ конкурентоспособен (ratio < 1,3)';
+    }
+
+    box.style.background  = bgColor;
+    box.style.borderColor = borderColor;
+
+    // Таблица АТР
+    if (tblRatio)   { tblRatio.textContent = ratio.toFixed(2) + '×'; tblRatio.style.color = statusColor; }
+    if (tblStatus)  { tblStatus.innerHTML  = '<span style="font-weight:700;color:' + statusColor + '">' + statusText + '</span>'; }
+    if (tblComment) { tblComment.textContent = commentText; }
+
+    // Прогресс ползунков
+    [jkmEl, coalEl].forEach(function(s) {
+      var pct = (s.value - s.min) / (s.max - s.min) * 100;
+      s.style.setProperty('--pct', pct + '%');
+    });
+  }
+
+  jkmEl.addEventListener('input', calc);
+  coalEl.addEventListener('input', calc);
+  jkmEl._g2cBound = true;
+  calc(); // первый расчёт
+}
+
+// Theme toggle
+let thD = false;
+function toggleT(b){
+  thD = !thD;
+  document.documentElement.setAttribute('data-theme', thD ? 'dark' : 'light');
+  b.textContent = thD ? '☀' : '☽';
+}
+
+// Panel switch
+function sp(id, el){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
+  const p = document.getElementById('panel-' + id);
+  if(p) p.classList.add('act');
+  if(id === 'gascoal' && typeof initGasCoal === 'function') initGasCoal();
+  if(id === 'gascoal' && typeof initGasCoal === 'function') initGasCoal();
+  if(el){
+    const isTab = el.classList.contains('tab');
+    document.querySelectorAll(isTab ? '.tab' : '.ni').forEach(t => t.classList.remove('act'));
+    el.classList.add('act');
+    const other = isTab ? '.ni' : '.tab';
+    document.querySelectorAll(other).forEach(t => {
+      const oc = t.getAttribute('onclick') || '';
+      if(oc.includes("'" + id + "'")) t.classList.add('act');
+      else t.classList.remove('act');
+    });
+  }
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+}
+
+// Color helpers
+function gc(v) {
+  const s = getComputedStyle(document.documentElement);
+  return s.getPropertyValue(v).trim();
+}
+
+// ── Chart defaults
+Chart.defaults.color = '#797876';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11;
+
+// ── BRIDGE
+new Chart(document.getElementById('cBridge'), {type:'bar', data:{
+  labels:['EBITDA/т\n2025А','+ Цена','+ Demand\npremium','− Logistics','± Объём','EBITDA/т\n2026E'],
+  datasets:[{data:[16.5, 3.8, 0.5, -0.5, 0.5, 20.8],
+    backgroundColor:['rgba(196,154,82,.8)','rgba(114,176,74,.8)','rgba(114,176,74,.75)','rgba(217,95,95,.8)','rgba(96,160,204,.8)','rgba(196,154,82,.9)'],
+    borderRadius:4}]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{display:false}},
+  scales:{y:{ticks:{callback:v=>'$'+v}}}}});
+
+// ── PRICE CHART (overview)
+new Chart(document.getElementById('cPrice'), {type:'line', data:{
+  labels:['2023','Q1 24','Q2 24','Q3 24','Q4 24','Q1 25','Q2 25','Q3 25','Q4 25','Q1 26','Q2 26','Q3 26E','Q4 26E','2027E','2028E'],
+  datasets:[{
+    label:'FOB Шахтёрск $4600 ккал',
+    data:[68,71,66,65,66,62,53,52,57,61,73.9,64.6,63.6,65,62],
+    borderColor:'#c49a52', backgroundColor:'rgba(196,154,82,.08)', tension:.35, fill:true,
+    pointBackgroundColor:(ctx) => ctx.dataIndex >= 10 ? '#e0aa38' : '#c49a52',
+    pointRadius:(ctx) => ctx.dataIndex >= 10 ? 5 : 3,
+    segment:{borderDash:(ctx) => ctx.p1DataIndex >= 10 ? [5,3] : []}
+  }]
+}, options:{responsive:true, maintainAspectRatio:true,
+  plugins:{legend:{display:false},
+    annotation:{annotations:{line1:{type:'line',xMin:10,xMax:10,borderColor:'rgba(200,180,140,.35)',borderWidth:1,borderDash:[4,4]}}}},
+  scales:{y:{ticks:{callback:v=>'$'+v}}}}});
+
+// ── EBITDA/t vs price
+new Chart(document.getElementById('cEbitdaT'), {type:'bar', data:{
+  labels:['$45','$50','$55','$60','$63','$65','$70','$75','$80'],
+  datasets:[{
+    label:'EBITDA/т ($)',
+    data:[0, 5, 10, 15, 18, 20, 25, 30, 35],
+    backgroundColor:(ctx)=>{const v=ctx.raw; return v<0?'rgba(217,95,95,.8)':v<8?'rgba(224,170,56,.8)':'rgba(114,176,74,.8)';},
+    borderRadius:4
+  }]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{display:false}},
+  scales:{y:{ticks:{callback:v=>'$'+v}}}}});
+
+// ── Revenue mix
+new Chart(document.getElementById('cMix'), {type:'doughnut', data:{
+  labels:['Китай 48%','Южная Корея 25%','Вьетнам 19%','Тайвань 3%','Япония 1%','Индонезия 2%'],
+  datasets:[{
+    data:[48, 25, 19, 3, 1, 2],
+    backgroundColor:['rgba(217,95,95,.8)','rgba(224,170,56,.8)','rgba(114,176,74,.8)','rgba(96,160,204,.8)','rgba(212,160,48,.8)','rgba(136,142,155,.8)'],
+    borderWidth:0, hoverOffset:5
+  }]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{position:'right',labels:{boxWidth:10,padding:8,font:{size:10}}}}}});
+
+// ── Demand score radar
+new Chart(document.getElementById('cDemand'), {type:'bar', data:{
+  labels:['Китай','Ю. Корея','Вьетнам','Тайвань','Япония'],
+  datasets:[
+    {label:'Крат. сигнал (1–5)', data:[3.5, 4.0, 4.5, 3.8, 3.5], backgroundColor:'rgba(196,154,82,.75)', borderRadius:4},
+    {label:'Долг. риск (1=низкий)', data:[3.0, 4.5, 2.0, 4.0, 4.5], backgroundColor:'rgba(217,95,95,.55)', borderRadius:4}
+  ]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10}}}},
+  scales:{y:{min:0,max:5,ticks:{stepSize:1}}}}});
+
+// ── Price full
+new Chart(document.getElementById('cPriceFull'), {type:'line', data:{
+  labels:['2023','2024','2025','Q1 26','Q2 26','Q3 26E','Q4 26E','Avg 26E','2027E','2028E'],
+  datasets:[{
+    label:'$/т FOB 4600 ккал',
+    data:[68, 67, 56.5, 61, 73.9, 64.6, 63.6, 65.8, 65, 62],
+    borderColor:'#c49a52', backgroundColor:'rgba(196,154,82,.07)', tension:.35, fill:true,
+    pointBackgroundColor:(ctx)=>ctx.dataIndex>=4?'#e0aa38':'#c49a52',
+    pointRadius:(ctx)=>ctx.dataIndex===7?6:ctx.dataIndex>=4?4:3,
+    segment:{borderDash:(ctx)=>ctx.p1DataIndex>=4?[5,3]:[]}
+  }]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{display:false}},
+  scales:{y:{min:45,ticks:{callback:v=>'$'+v}}}}});
+
+// ── EBITDA/т quarterly
+new Chart(document.getElementById('cEbitdaQ'), {type:'bar', data:{
+  labels:['Q1 26','Q2 26','Q3 26E','Q4 26E','2027E','2028E'],
+  datasets:[{
+    label:'EBITDA/т ($)',
+    data:[16, 28.9, 19.6, 18.6, 20, 17],
+    backgroundColor:['rgba(196,154,82,.8)','rgba(114,176,74,.85)','rgba(114,176,74,.75)','rgba(196,154,82,.7)','rgba(196,154,82,.6)','rgba(196,154,82,.5)'],
+    borderRadius:4
+  }]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{display:false}},
+  scales:{y:{ticks:{callback:v=>'$'+v}}}}});
+
+// ── Risk radar
+new Chart(document.getElementById('cRisk'), {type:'radar', data:{
+  labels:['Energy transition','Запуск АЭС','Внутр. произ-во Китая','СПГ нормализ.','FX (RUB/USD)','Логистика'],
+  datasets:[
+    {label:'Риски (1–5)', data:[4.8,3.8,3.5,3.0,2.5,2.0], borderColor:'#d95f5f', backgroundColor:'rgba(217,95,95,.1)', pointBackgroundColor:'#d95f5f', pointRadius:4},
+    {label:'Возможности', data:[1,2,2,2,3,3], borderColor:'#72b04a', backgroundColor:'rgba(114,176,74,.08)', pointBackgroundColor:'#72b04a', pointRadius:4}
+  ]
+}, options:{responsive:true,maintainAspectRatio:true,
+  scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9}}}},
+  plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10}}}}}});
+
+// ── LT demand outlook
+new Chart(document.getElementById('cLT'), {type:'line', data:{
+  labels:['2023','2025','2027','2030','2033','2035'],
+  datasets:[
+    {label:'Вьетнам', data:[50,66,85,110,125,100], borderColor:'#72b04a', tension:.35, pointRadius:3},
+    {label:'Ю. Корея', data:[115,115,110,100,80,65], borderColor:'#e0aa38', borderDash:[4,3], tension:.35, pointRadius:3},
+    {label:'Япония', data:[164,155,145,120,90,70], borderColor:'#60a0cc', borderDash:[4,3], tension:.35, pointRadius:3},
+    {label:'Китай (импорт)', data:[530,490,460,420,370,330], borderColor:'#d95f5f', borderDash:[4,3], tension:.35, pointRadius:3, yAxisID:'y1'}
+  ]
+}, options:{responsive:true,maintainAspectRatio:true,
+  plugins:{legend:{position:'top',labels:{boxWidth:10,padding:8,font:{size:10}}}},
+  scales:{y:{title:{display:true,text:'млн т (Вьетнам, Корея, Япония)',font:{size:9}}},
+           y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'млн т (Китай)',font:{size:9}}}}}});
+
+// ── Sensitivity table (цена угля × USD/RUB, cost $40, log $5, vol 19 млн т)
+function buildSens(){
+  const fxRates=[70,73,76,78,80,83,86,90,95,100];
+  const prices=[50,55,60,65,68,70,75,80,85,90];
+  const VOL=19, COST=40, LOG=5;
+  let h='<tr><th>USD/RUB↓ / Цена→</th>';
+  prices.forEach(pr=>h+=`<th>$${pr}</th>`);
+  h+='</tr>';
+  fxRates.forEach(fx=>{
+    h+=`<tr><td class="s-rl">${fx} ₽/$</td>`;
+    prices.forEach(pr=>{
+      const ebtUsd = (pr - COST - LOG) * VOL;
+      const ebtRub = Math.round(ebtUsd * fx / 1000 * 10) / 10;
+      let cls = 's-md';
+      if(ebtUsd < 100) cls = 's-lo';
+      else if(ebtUsd > 500) cls = 's-hi';
+      // base scenario: price=80, fx=80
+      if(Math.abs(fx-80)<0.5 && Math.abs(pr-75)<0.5) cls = 's-bs';
+      h+=`<td class="${cls}" title="${ebtRub} млрд ₽">${ebtUsd.toFixed(0)}</td>`;
+    });
+    h+='</tr>';
+  });
+  document.getElementById('sensTab').innerHTML = h;
+}
+buildSens();
+
+// ── Sliders
+function recalc(){
+  const vol = +document.getElementById('slVol').value;
+  const pr = +document.getElementById('slP').value;
+  const cost = +document.getElementById('slC').value;
+  const log = +document.getElementById('slL').value;
+  const dp = +document.getElementById('slD').value / 100;
+  const fx = +document.getElementById('slFX').value;
+
+  document.getElementById('svVol').textContent = vol.toFixed(1);
+  document.getElementById('svP').textContent = pr.toFixed(1);
+  document.getElementById('svC').textContent = cost.toFixed(1);
+  document.getElementById('svL').textContent = log.toFixed(1);
+  document.getElementById('svD').textContent = (dp >= 0 ? '+' : '') + Math.round(dp*100);
+  document.getElementById('svFX').textContent = fx;
+
+  const rp = pr * (1 + dp);
+  const ebt = rp - cost - log;
+  const ebu = ebt * vol;
+  const ebr = ebu * fx / 1000;
+
+  document.getElementById('oRP').textContent = '$' + rp.toFixed(1) + '/т';
+  document.getElementById('oET').textContent = '$' + ebt.toFixed(1) + '/т';
+  document.getElementById('oEU').textContent = '$' + ebu.toFixed(0) + ' млн';
+  document.getElementById('oER').textContent = ebr.toFixed(1) + ' млрд ₽';
+
+  document.querySelectorAll('input[type=range]').forEach(s => {
+    const pct = (+s.value - +s.min) / (+s.max - +s.min) * 100;
+    s.style.setProperty('--pct', pct + '%');
+  });
+  recalcDebt();
+}
+recalc();
+
+// ── Debt repayment model
+function recalcDebt(){
+  // Get EBITDA in RUB mln from the main model
+  const vol = +document.getElementById('slVol').value;
+  const pr  = +document.getElementById('slP').value;
+  const cost= +document.getElementById('slC').value;
+  const log = +document.getElementById('slL').value;
+  const dp  = +document.getElementById('slD').value / 100;
+  const fx  = +document.getElementById('slFX').value;
+  const rp  = pr * (1 + dp);
+  const ebtPerT = rp - cost - log;
+  const ebtdaUsd = ebtPerT * vol;          // $млн
+  const ebtdaRub = ebtdaUsd * fx;          // млн руб
+
+  const DEBT_BEGIN = +document.getElementById('slDebt').value;
+  const INT_RATE   = +document.getElementById('slRate').value / 100;
+  const TAX_RATE   = 0.25;
+
+  const inv = +document.getElementById('slInv').value;
+  const rep = +document.getElementById('slRep').value;
+
+  // Update displayed values
+  document.getElementById('dvDebt').textContent = Math.round(DEBT_BEGIN).toLocaleString('ru-RU');
+  document.getElementById('dvRate').textContent = (+document.getElementById('slRate').value).toFixed(1).replace('.', ',') + '%';
+  document.getElementById('dvInv').textContent  = inv.toLocaleString('ru-RU');
+  document.getElementById('dvRep').textContent  = rep.toLocaleString('ru-RU');
+
+  const interest = Math.round(INT_RATE * DEBT_BEGIN);   // Долг нач. × Ставка
+  const taxBase  = ebtdaRub - inv - inv / 20;
+  const taxes    = Math.round(TAX_RATE * Math.max(taxBase, 0));
+  const fcf      = Math.round(ebtdaRub - taxes - inv - interest - rep);
+  const debtEnd  = DEBT_BEGIN - rep;
+  const leverBegin = '3.5'; // захардкожено: Долг/EBITDA на начало 2026
+  const leverEnd   = ebtdaRub > 0 ? (debtEnd    / ebtdaRub).toFixed(2) : '—';
+  const intRateDisp = (INT_RATE * 100).toFixed(1).replace('.', ',') + '%';
+
+  function fmt(v){ return Math.round(v).toLocaleString('ru-RU'); }
+  function row(label, val, cls=''){
+    const vStr = fmt(val);
+    const vCls = val < 0 ? 'debt-neg' : (val > 0 ? 'debt-pos' : '');
+    return `<tr class="debt-row ${cls}"><td>${label}</td><td class="${vCls}">${vStr}</td></tr>`;
+  }
+  function rowStr(label, val, cls=''){
+    return `<tr class="debt-row ${cls}"><td>${label}</td><td>${val}</td></tr>`;
+  }
+  function sep(label){
+    return `<tr class="debt-row debt-sep"><td colspan="2">${label}</td></tr>`;
+  }
+
+  let t = '';
+  t += row('Долг на начало года', DEBT_BEGIN);
+  t += row('EBITDA (млн руб.)', Math.round(ebtdaRub));
+  t += sep('Утилизация EBITDA');
+  t += row('Инвестиции', inv);
+  t += row('Налоги', taxes);
+  t += row(`Уплата процентов (${intRateDisp} × Долг нач.)`, interest);
+  t += row('Погашение долга', rep);
+  t += sep('Итог');
+  t += row('Чистый денежный поток', fcf);
+  t += row('Долг на конец года', debtEnd);
+  t += rowStr('Долг / EBITDA на начало 2026', leverBegin + 'x');
+  t += rowStr('Долг / EBITDA на конец', leverEnd + 'x');
+
+  document.getElementById('debtTable').innerHTML = t;
+
+  // Update track fill for brown sliders
+  ['slDebt','slRate','slInv','slRep'].forEach(id=>{
+    const s = document.getElementById(id);
+    if(s){ const pct=(+s.value-+s.min)/(+s.max-+s.min)*100; s.style.setProperty('--pct',pct+'%'); }
+  });
+}
+recalcDebt();
+
+document.querySelectorAll('input[type=range]').forEach(s => {
+  const pct = (+s.value - +s.min) / (+s.max - +s.min) * 100;
+  s.style.setProperty('--pct', pct + '%');
+});
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   GitHub Pages data bridge
+   Читает статические JSON, которые обновляет GitHub Actions:
+     ./data/jkm.json    — цена JKM с Investing.com
+     ./data/risks.json  — карточки вкладки «Риски»
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  var DATA_JKM   = './data/jkm.json';
+  var DATA_RISKS = './data/risks.json';
+  var REFRESH_MS = 60000;
+
+  function badge() {
+    var el = document.getElementById('data-status');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'data-status';
+    el.style.cssText =
+      'position:fixed;right:12px;bottom:12px;z-index:99;font-size:11px;' +
+      'font-family:var(--fm),monospace;padding:6px 10px;border-radius:9999px;' +
+      'border:1px solid var(--bord);background:var(--surf2);color:var(--muted);' +
+      'box-shadow:var(--shsm)';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function setStatus(text, color) {
+    var el = badge();
+    el.textContent = text;
+    el.style.color = color || 'var(--muted)';
+  }
+
+  function fmtTime(iso) {
+    try {
+      return new Date(iso).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+    } catch (e) { return iso || '—'; }
+  }
+
+  /* ── JKM → вкладка Gas↔Coal ─────────────────────────────── */
+  function applyJkm(payload) {
+    var slider = document.getElementById('g2c-jkm');
+    var label  = document.getElementById('g2c-jkm-val');
+    if (!slider || !payload || typeof payload.price !== 'number') return;
+
+    var price = payload.price;
+    slider.step = '0.01';
+    if (price < parseFloat(slider.min)) slider.min = String(Math.floor(price));
+    if (price > parseFloat(slider.max)) slider.max = String(Math.ceil(price));
+    slider.value = String(price);
+    if (label) label.textContent = price.toFixed(2).replace('.', ',');
+
+    var pct = (price - +slider.min) / (+slider.max - +slider.min) * 100;
+    slider.style.setProperty('--pct', pct + '%');
+
+    if (typeof window.initGasCoal === 'function') { try { window.initGasCoal(); } catch (e) {} }
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+
+    setStatus(
+      (payload.stale ? '⚠ JKM (кэш) ' : '● JKM ') + '$' + price.toFixed(2) + ' · ' + fmtTime(payload.updated_at),
+      payload.stale ? 'var(--warn)' : 'var(--ok)'
+    );
+  }
+
+  /* ── Риски → вкладка «Риски» ────────────────────────────── */
+  var SEVERITY = {
+    critical:  { color: 'var(--err)',  label: 'Критич. долг.' },
+    high:      { color: 'var(--err)',  label: 'Высокий' },
+    medium:    { color: 'var(--warn)', label: 'Средний' },
+    low:       { color: 'var(--gold)', label: 'Умеренный' },
+    upside:    { color: 'var(--ok)',   label: 'Upside' },
+    fx_upside: { color: 'var(--blue)', label: 'FX upside' }
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function riskRow(item) {
+    var sev = SEVERITY[item.severity] || SEVERITY.medium;
+    return '<div class="rr">' +
+      '<div class="rd" style="background:' + sev.color + '"></div>' +
+      '<div class="rn"><strong>' + esc(item.title) + '</strong> — ' + esc(item.description) + '</div>' +
+      '<span class="rb" style="background:color-mix(in oklch,' + sev.color + ' 15%,transparent);color:' + sev.color + '">' +
+        esc(sev.label) + '</span>' +
+      '<div class="ri">' + esc(item.impact) + '</div>' +
+    '</div>';
+  }
+
+  function applyRisks(payload) {
+    var panel = document.getElementById('panel-risks');
+    if (!panel || !payload || !Array.isArray(payload.items)) return;
+    var grids = panel.querySelectorAll('.rg');
+    if (grids.length < 2) return;
+
+    var risks  = payload.items.filter(function (i) { return i.type === 'risk'; });
+    var upside = payload.items.filter(function (i) { return i.type !== 'risk'; });
+
+    grids[0].innerHTML = risks.map(riskRow).join('');
+    grids[1].innerHTML = upside.map(riskRow).join('');
+
+    var sub = panel.querySelector('.ss');
+    if (sub) sub.textContent = 'Горизонт 2026–2030 · обновлено ' + fmtTime(payload.updated_at);
+  }
+
+  function load(url) {
+    return fetch(url + '?t=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error(url + ' → ' + r.status);
+      return r.json();
+    });
+  }
+
+  function refresh() {
+    load(DATA_JKM).then(applyJkm).catch(function () { setStatus('⚠ jkm.json недоступен', 'var(--err)'); });
+    load(DATA_RISKS).then(applyRisks).catch(function () {});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', refresh);
+  } else {
+    refresh();
+  }
+  setInterval(refresh, REFRESH_MS);
+})();
+</script>
+
+</body>
+</html>
