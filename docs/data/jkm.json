@@ -1,7 +1,7 @@
 {
-  "price": 26.385,
-  "source": "yahoo:lastClose 14.10",
-  "updated_at": "2026-10-16T23:25:34+00:00",
+  "price": 29.925,
+  "source": "yahoo:lastClose 16.10",
+  "updated_at": "2026-10-17T01:27:49+00:00",
   "stale": false,
-  "previous_price": 26.532
+  "previous_price": 26.385
 }
